@@ -209,6 +209,7 @@
 <div id="summary-box">
   <h2>⭐ Meine Auswahl</h2>
   <ul id="summary-list"></ul>
+  <button id="export-btn" onclick="exportSelection()" style="margin-top:12px; width:100%; padding:11px 16px; background:#2a7d4f; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; min-height:44px;">📤 Auswahl senden</button>
 </div>
 
 <div class="legend">
@@ -725,6 +726,39 @@
         text: 'Übersicht der Tanzschulen im Raum Kreuzlingen/Thurgau – bitte prüfen',
         url: SHARE_URL
       });
+    }
+  }
+
+  function exportSelection() {
+    const selected = document.querySelectorAll('.card.selected');
+    if (selected.length === 0) return;
+
+    let text = 'Meine Auswahl – Tanzschulen Bodensee\n';
+    text += '=====================================\n\n';
+
+    selected.forEach(card => {
+      text += '✓ ' + card.dataset.name + '\n';
+      const contact = card.dataset.contact;
+      if (contact) text += '   ' + contact + '\n';
+      const notes = card.querySelector('textarea') ? card.querySelector('textarea').value.trim() : '';
+      if (notes) text += '   Notiz: ' + notes + '\n';
+      text += '\n';
+    });
+
+    text += '—\nErstellt mit Tanzschulen-Übersicht, April 2026';
+
+    if (navigator.share) {
+      navigator.share({ title: 'Meine Tanzschulen-Auswahl', text });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('export-btn');
+      btn.textContent = '✓ Kopiert – jetzt einfügen!';
+      setTimeout(() => btn.textContent = '📤 Auswahl senden', 2500);
     }
   }
 
