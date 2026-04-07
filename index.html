@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tanzschulen Übersicht – Raum Kreuzlingen/Thurgau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 15px; color: #222; background: #f5f5f5; padding: 16px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 13px; margin-bottom: 16px; }
+
+  /* Auswahl-Box */
+  #summary-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  #summary-box h2 { font-size: 14px; margin-bottom: 10px; color: #2a7d4f; }
+  #summary-list { list-style: none; }
+  #summary-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  #summary-list li:last-child { border-bottom: none; }
+  .summary-name { font-weight: bold; }
+  .summary-contact { color: #666; font-size: 12px; }
+
+  .legend {
+    display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; font-size: 12px; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    padding: 16px;
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+  .card.top    { border-left: 4px solid #2a7d4f; }
+  .card.mid    { border-left: 4px solid #e8a020; }
+  .card.low    { border-left: 4px solid #bbb; }
+  .card.current{ border-left: 4px solid #1a6bb5; }
+  .card.selected { box-shadow: 0 0 0 2px #2a7d4f; background: #f6fff9; }
+
+  /* Checkbox-Bereich oben rechts */
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .card-header-left { flex: 1; }
+  .interest-btn {
+    cursor: pointer;
+    background: none;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    color: #888;
+    white-space: nowrap;
+    transition: all 0.15s;
+    margin-left: 10px;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+  .interest-btn:hover { border-color: #2a7d4f; color: #2a7d4f; }
+  .interest-btn.active { background: #2a7d4f; border-color: #2a7d4f; color: #fff; }
+
+  @media (max-width: 900px) {
+    body { padding: 12px; font-size: 15px; }
+    h1 { font-size: 18px; }
+    .grid { grid-template-columns: 1fr; gap: 10px; }
+    .card { padding: 14px; }
+    .info-row { flex-direction: column; gap: 1px; margin-bottom: 8px; }
+    .info-label { min-width: unset; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .info-val { font-size: 14px; }
+    .interest-btn { padding: 10px 16px; font-size: 15px; min-height: 48px; }
+    .legend { gap: 10px; font-size: 12px; }
+    #summary-box { padding: 12px; }
+    #share-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }
+    .share-actions button { padding: 12px; font-size: 14px; min-height: 48px; }
+    #share-inner { padding: 20px 16px; }
+    .tags { margin-top: 8px; }
+    .hinweis { font-size: 13px; }
+    .notes-area textarea { font-size: 16px; /* verhindert iOS-Zoom beim Fokus */ }
+  }
+
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: bold; margin-bottom: 6px;
+  }
+  .badge.top     { background: #d4edda; color: #2a7d4f; }
+  .badge.mid     { background: #fff3cd; color: #856404; }
+  .badge.low     { background: #e9ecef; color: #666; }
+  .badge.current { background: #cce5ff; color: #1a6bb5; }
+
+  .school-name { font-size: 15px; font-weight: bold; margin-bottom: 2px; }
+  .location { font-size: 12px; color: #888; margin-bottom: 10px; }
+  .info-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: flex-start; font-size: 13px; }
+  .info-label { color: #888; min-width: 80px; flex-shrink: 0; }
+  .info-val { color: #222; }
+  .tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 11px; background: #f0f0f0; border-radius: 4px; padding: 2px 7px; color: #444; }
+  .tag.kinder  { background: #e8f4fd; color: #1a6bb5; }
+  .tag.honorar { background: #d4edda; color: #2a7d4f; }
+  .hinweis {
+    margin-top: 10px; padding: 7px 10px; background: #fffbe6;
+    border-left: 3px solid #e8a020; font-size: 12px; color: #555;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Notizfeld */
+  .notes-area {
+    margin-top: 10px;
+    display: none;
+  }
+  .card.selected .notes-area { display: block; }
+  .notes-area textarea {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    resize: vertical;
+    min-height: 50px;
+    color: #333;
+    background: #fff;
+  }
+  .notes-area textarea:focus { outline: none; border-color: #2a7d4f; }
+  .notes-label { font-size: 11px; color: #888; margin-bottom: 3px; }
+
+  a { color: #1a6bb5; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Teilen-Button */
+  #share-btn {
+    background: #1a6bb5; color: #fff; border: none; border-radius: 6px;
+    padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: Arial, sans-serif;
+  }
+  #share-btn:hover { background: #155a9a; }
+
+  /* Teilen-Modal */
+  #share-modal {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center;
+  }
+  #share-modal.open { display: flex; }
+  #share-inner {
+    background: #fff; border-radius: 10px; padding: 24px; max-width: 480px; width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  #share-inner h3 { font-size: 15px; margin-bottom: 12px; }
+  #share-inner p { font-size: 13px; color: #444; margin-bottom: 14px; line-height: 1.6; }
+  #file-path-box {
+    background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+    padding: 8px 10px; font-size: 12px; font-family: monospace;
+    word-break: break-all; color: #333; margin-bottom: 12px;
+  }
+  .share-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .share-actions button {
+    flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;
+    font-size: 13px; cursor: pointer; font-family: Arial, sans-serif; background: #fff;
+  }
+  .share-actions button:hover { background: #f0f0f0; }
+  .share-actions button.primary { background: #1a6bb5; color: #fff; border-color: #1a6bb5; }
+  .share-actions button.primary:hover { background: #155a9a; }
+  #copy-confirm { font-size: 12px; color: #2a7d4f; margin-top: 6px; min-height: 18px; }
+  #modal-close { float: right; background: none; border: none; font-size: 18px; cursor: pointer; color: #999; margin-top: -4px; }
+</style>
+</head>
+<body>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+  <h1>Tanzschulen – Raum Kreuzlingen / Thurgau</h1>
+  <button id="share-btn" onclick="openShareModal()">&#128279; Datei teilen</button>
+</div>
+<p class="subtitle">Potenzielle Auftraggeber für Tatjana Celebic · Stand April 2026 · Umkreis ~30 Min. von Allensbach</p>
+
+<!-- Teilen-Modal -->
+<div id="share-modal" onclick="closeShareModal(event)">
+  <div id="share-inner">
+    <button id="modal-close" onclick="document.getElementById('share-modal').classList.remove('open')">✕</button>
+    <h3>🔗 Übersicht teilen</h3>
+    <p>Schick diesen Link per E-Mail oder WhatsApp — funktioniert auf iPhone, Android und PC:</p>
+    <div id="file-path-box"></div>
+    <div class="share-actions">
+      <button onclick="copyPath()">Link kopieren</button>
+      <button class="primary" onclick="openMail()">✉ E-Mail öffnen</button>
+      <button class="primary" onclick="shareNative()" id="native-share-btn" style="display:none">&#8679; Teilen</button>
+    </div>
+    <div id="copy-confirm"></div>
+    <p style="margin-top:14px; font-size:12px; color:#888;">Jede Person trifft ihre eigene Auswahl — die Checkboxen werden lokal im Browser gespeichert.</p>
+  </div>
+</div>
+
+<!-- Zusammenfassung ausgewählter Schulen -->
+<div id="summary-box">
+  <h2>⭐ Meine Auswahl</h2>
+  <ul id="summary-list"></ul>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2a7d4f"></div> Sehr interessant</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e8a020"></div> Prüfenswert</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bbb"></div> Weniger geeignet</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a6bb5"></div> Aktueller AG</div>
+  <div class="legend-item" style="margin-left:auto; color:#2a7d4f; font-weight:bold; font-size:12px;" id="save-hint"></div>
+</div>
+
+<div class="grid">
+
+  <!-- 1. Musikschule Kreuzlingen -->
+  <div class="card top" data-id="msk" data-name="Musikschule Kreuzlingen (MSK)" data-contact="071 672 84 84 · info@m-s-k.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Musikschule Kreuzlingen (MSK)</div>
+    <div class="location">Nationalstrasse 1, 8280 Kreuzlingen · ~12 Min.</div>
+    <div class="info-row"><span class="info-label">Leitung</span><span class="info-val">Valentin Metzger (Schulleitung); Stephanie Zweili (Tanzabteilung seit 2017)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41716728484">071 672 84 84</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@m-s-k.ch">info@m-s-k.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.m-s-k.ch" target="_blank">www.m-s-k.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Groß – öffentliche Schule, institutionell, Tanzzentrum seit 2011 integriert</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz ab 4 J.</span>
+      <span class="tag kinder">Ballett</span>
+      <span class="tag">Jazz / Modern</span>
+      <span class="tag">Hip-Hop</span>
+      <span class="tag">Flamenco</span>
+      <span class="tag">Stepptanz</span>
+      <span class="tag honorar">Honorarlehrkräfte wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Beste Option: Breites Kindertanzangebot, mehrere Tanzlehrkräfte, institutionelle Struktur mit regelmäßigem Bedarf.</div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 2. Ballettschule Kreuzlingen -->
+  <div class="card top" data-id="ballett-kreu" data-name="Ballettschule Kreuzlingen" data-contact="077 468 63 32 (WhatsApp)">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Ballettschule Kreuzlingen</div>
+    <div class="location">Wasenstrasse 22, 8280 Kreuzlingen · ~12 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Carmelina Kirstein (Gründerin, seit 2016)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41774686332">077 468 63 32</a></span></div>
+    <div class="info-row"><span class="info-label">Kontakt</span><span class="info-val">WhatsApp / Kontaktformular</span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.ballettschulekreuzlingen.ch" target="_blank">www.ballettschulekreuzlingen.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß–groß · mind. 6 Lehrkräfte · ~24 Ballettskurse + weitere Stile</span></div>
+    <div class="tags">
+      <span class="tag kinder">Tänzerische Früherziehung ab 3 J.</span>
+      <span class="tag kinder">Pré-Ballett / Ballett</span>
+      <span class="tag">Jazz Modern</span>
+      <span class="tag">Hip-Hop</span>
+      <span class="tag">Contemporary</span>
+      <span class="tag honorar">Honorarlehrkräfte sehr wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Professionelle Schule nach Waganowa-Methode, stark gewachsen, mehrere externe Lehrkräfte im Team.</div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 3. The Motion Factory -->
+  <div class="card top" data-id="motion-factory" data-name="The Motion Factory" data-contact="078 218 26 06 · info@the-motion-factory.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">The Motion Factory</div>
+    <div class="location">Im Alexander 4, 8500 Frauenfeld · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Inhaberin (dipl. Basispädagogin, J+S-Expertin); Kindertanz: Annika Isenring</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41782182606">078 218 26 06</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@the-motion-factory.ch">info@the-motion-factory.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.the-motion-factory.ch" target="_blank">www.the-motion-factory.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß · mehrere Räume, Raumvermietung, mehrere Lehrkräfte</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz 3–5 J. & 5–7 J.</span>
+      <span class="tag kinder">Ballett</span>
+      <span class="tag">Showdance</span>
+      <span class="tag">Poledance</span>
+      <span class="tag">BodyJam</span>
+      <span class="tag honorar">Honorarstruktur wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Kindertanz-Kurse werden bereits von externer Lehrkraft (Annika Isenring) unterrichtet – Honorarmodell belegt.</div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 4. Ballettschule Frauenfeld -->
+  <div class="card current" data-id="ballett-frauenfeld" data-name="Ballettschule Frauenfeld (aktueller AG)" data-contact="052 720 77 38 · ballettschule@bluewin.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge current">Aktueller Auftraggeber</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Ballettschule Frauenfeld</div>
+    <div class="location">Bienenweg 10, 8500 Frauenfeld · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Michaela Mastroianni Engel</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41527207738">052 720 77 38</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:ballettschule@bluewin.ch">ballettschule@bluewin.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.ballettschule-frauenfeld.ch" target="_blank">www.ballettschule-frauenfeld.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß · etabliert seit über 25 Jahren · breites Angebot</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz ab 3 J.</span>
+      <span class="tag kinder">Ballett alle Stufen</span>
+      <span class="tag">Jazz / Hip-Hop</span>
+      <span class="tag">Zumba / Pilates</span>
+      <span class="tag">Akrobatik</span>
+      <span class="tag honorar">Honorarlehrkräfte: belegt</span>
+    </div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 5. Ballett und Fitness -->
+  <div class="card mid" data-id="ballett-fitness" data-name="Ballett und Fitness GmbH" data-contact="079 714 69 14 · info@ballettundfitness.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Ballett und Fitness GmbH</div>
+    <div class="location">Park19, Juchstrasse 22b, 8500 Frauenfeld · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Marina Schütz (Inhaberin, GmbH-Gründung 2025)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41797146914">079 714 69 14</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@ballettundfitness.ch">info@ballettundfitness.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.ballettundfitness.ch" target="_blank">www.ballettundfitness.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Klein · frisch gegründete GmbH, Einzelperson</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz ab 3 J.</span>
+      <span class="tag kinder">Ballett</span>
+      <span class="tag">Akrobatik</span>
+      <span class="tag">Modern Dance</span>
+      <span class="tag">Qualitop-zertifiziert</span>
+    </div>
+    <div class="hinweis">Frisch gegründet – Bedarf an Honorarlehrkräften unklar, aber beim Wachstum realistisch.</div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 6. Step Up Move -->
+  <div class="card mid" data-id="step-up-move" data-name="Step Up Move" data-contact="step.up@gmx.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Step Up Move</div>
+    <div class="location">Thurgau (genaue Adresse unbekannt)</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Nicht öffentlich bekannt</span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:step.up@gmx.ch">step.up@gmx.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.step-up-move.ch" target="_blank">www.step-up-move.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Unklar · vermutlich klein</span></div>
+    <div class="tags">
+      <span class="tag">Hip-Hop / Street Dance vermutet</span>
+    </div>
+    <div class="hinweis">Wenig Infos verfügbar. Kontaktaufnahme per E-Mail möglich.</div>
+    <div class="notes-area">
+      <div class="notes-label">Notizen:</div>
+      <textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea>
+    </div>
+  </div>
+
+  <!-- 7. Dance More -->
+  <div class="card low" data-id="dance-more" data-name="Dance More GmbH" data-contact="078 876 13 05 · info@dancemore.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Dance More GmbH</div>
+    <div class="location">Gewerbestrasse 3, 8500 Frauenfeld · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leiter</span><span class="info-val">Michal Vajcik</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41788761305">078 876 13 05</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@dancemore.ch">info@dancemore.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.dancemore.ch" target="_blank">www.dancemore.ch</a></span></div>
+    <div class="tags">
+      <span class="tag">Paartanz</span><span class="tag">Salsa / Hochzeitstanz</span><span class="tag">Erwachsene</span>
+    </div>
+    <div class="hinweis">Fokus auf Paartanz für Erwachsene – kein Kindertanz-Schwerpunkt erkennbar.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+  <!-- 8. Flamenco Kreuzlingen -->
+  <div class="card low" data-id="flamenco-kreu" data-name="Flamenco Kreuzlingen" data-contact="—">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Flamenco Kreuzlingen</div>
+    <div class="location">Konstanzerstrasse 3, 8274 Tägerwilen · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Carmen Ramos</span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.flamenco-kreuzlingen.ch" target="_blank">www.flamenco-kreuzlingen.ch</a></span></div>
+    <div class="tags">
+      <span class="tag">Flamenco</span><span class="tag">Teenager & Erwachsene</span><span class="tag">Senioren 60+</span>
+    </div>
+    <div class="hinweis">Spezialisierung auf Flamenco, kein Kindertanz. Einzellehrerin – kein Bedarf an Honorarlehrkräften.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+  <!-- 9. Co-Dance -->
+  <div class="card low" data-id="co-dance" data-name="Co-Dance (TSV)" data-contact="071 463 61 14 · co-dance@outlook.com">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Co-Dance (TSV)</div>
+    <div class="location">8592 Uttwil · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leitung</span><span class="info-val">Rolf Bühler (Präsident)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41714636114">071 463 61 14</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:co-dance@outlook.com">co-dance@outlook.com</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.co-dance.ch" target="_blank">www.co-dance.ch</a></span></div>
+    <div class="tags">
+      <span class="tag">Tanzverein</span><span class="tag">Akrobatik / Turnen</span><span class="tag">Hip-Hop</span>
+    </div>
+    <div class="hinweis">Tanzverein – Trainer statt Honorarlehrkräfte. Kein klassischer Kindertanz/Ballett-Fokus.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+  <!-- 10. Die Tanzerei -->
+  <div class="card low" data-id="tanzerei" data-name="Die Tanzerei" data-contact="078 890 40 30 · info@dietanzerei.ch">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Die Tanzerei</div>
+    <div class="location">Ziegeleistrasse 14, 8360 Eschlikon · ~35 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Claudia Morf-Schuler (Tanzpädagogin)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41788904030">078 890 40 30</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@dietanzerei.ch">info@dietanzerei.ch</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.dietanzerei.ch" target="_blank">www.dietanzerei.ch</a></span></div>
+    <div class="tags">
+      <span class="tag kinder">Mini-Kindertanz</span><span class="tag">Streetjazz</span><span class="tag">Hip-Hop</span>
+    </div>
+    <div class="hinweis">Etwas zu weit (~35 Min.) und zu klein – Einzelperson unterrichtet selbst.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+  <!-- 11. Dance Floor -->
+  <div class="card low" data-id="dance-floor" data-name="Dance-Floor Tanzschule" data-contact="076 445 00 64">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Dance-Floor Tanzschule</div>
+    <div class="location">Fetzislohstrasse 11, 9320 Frasnacht (Arbon) · ~40 Min.</div>
+    <div class="info-row"><span class="info-label">Inhaberin</span><span class="info-val">Florence Eigenmann (Gründerin 2003)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+41764450064">076 445 00 64</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="http://www.dance-floor.ch" target="_blank">www.dance-floor.ch</a></span></div>
+    <div class="tags">
+      <span class="tag">Paartanz</span><span class="tag">Salsa / Walzer / Tango</span><span class="tag">Erwachsene</span>
+    </div>
+    <div class="hinweis">Fokus Paartanz Erwachsene, zu weit. Kein Kindertanz-Angebot erkennbar.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+</div>
+
+<!-- Deutsche Schulen -->
+<h2 style="margin-top:32px; margin-bottom:4px; font-size:16px;">Deutschland – Raum Konstanz / Überlingen</h2>
+<p style="font-size:13px; color:#666; margin-bottom:16px;">~15–30 Min. von Allensbach</p>
+
+<div class="grid">
+
+  <!-- DE1: Tanzwerk Konstanz -->
+  <div class="card top" data-id="tanzwerk-kn" data-name="Tanzwerk Konstanz (ADTV)" data-contact="+49 7531 9765125 · info@tanzwerk.dance">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Tanzwerk Konstanz</div>
+    <div class="location">Max-Stromeyer-Str. 170c, 78467 Konstanz · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Inhaberin</span><span class="info-val">Sandy Wenzel (ADTV-Tanzlehrerin, ADTV Hip Hop Master Instructor)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+4975319765125">07531 9765125</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@tanzwerk.dance">info@tanzwerk.dance</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.tanzwerk.dance" target="_blank">www.tanzwerk.dance</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Groß · ADTV-Schule · umfangreichstes Kursangebot in Konstanz</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanzen 3–6 J.</span>
+      <span class="tag kinder">Ballett 5–9 J.</span>
+      <span class="tag">Hip Hop</span>
+      <span class="tag">Jazz</span>
+      <span class="tag">Paartanz</span>
+      <span class="tag">Zumba / Yoga</span>
+      <span class="tag honorar">Honorarlehrkräfte wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Größte ADTV-Schule in Konstanz mit mehreren Kindertanzkursen – gute Chancen auf Honorarbedarf.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE2: Czerner Dance Academy -->
+  <div class="card top" data-id="czerner" data-name="Czerner Dance Academy Konstanz" data-contact="07531 991144 · info@czerner-dance.com">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Czerner Dance Academy</div>
+    <div class="location">Kreuzlinger Straße 54, 78462 Konstanz · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Leitung</span><span class="info-val">Peter und Andrea Czerner</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+497531991144">07531 991144</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@czerner-dance.com">info@czerner-dance.com</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.czerner-dance.com" target="_blank">www.czerner-dance.com</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß · professionelle Tanzakademie · breites Kursangebot</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kinderballett</span>
+      <span class="tag kinder">Ballett alle Stufen</span>
+      <span class="tag">Modern Dance</span>
+      <span class="tag">Hip Hop</span>
+      <span class="tag">Jazz Dance</span>
+      <span class="tag">Stepptanz</span>
+      <span class="tag honorar">Honorarlehrkräfte wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Professionelle Akademie direkt an der Grenze CH/DE – auch Kooperation mit Theater Konstanz.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE3: Musicalschule Bodensee -->
+  <div class="card top" data-id="musicalschule" data-name="Musicalschule Bodensee Überlingen" data-contact="07551 936568 · office@musicalschule-bodensee.de">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge top">Sehr interessant</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Musicalschule Bodensee</div>
+    <div class="location">Hägerstraße 12, 88662 Überlingen · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leitung</span><span class="info-val">Mattka Scarlett</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+4975519365680">07551 936568</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:office@musicalschule-bodensee.de">office@musicalschule-bodensee.de</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.musicalschule-bodensee.de" target="_blank">www.musicalschule-bodensee.de</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Groß · über 350 Schüler · Tanz, Gesang & Schauspiel unter einem Dach</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz</span>
+      <span class="tag kinder">Ballett</span>
+      <span class="tag">Jazz Dance</span>
+      <span class="tag">Modern</span>
+      <span class="tag">Hip Hop</span>
+      <span class="tag">Gesang / Musical</span>
+      <span class="tag honorar">Honorarlehrkräfte sehr wahrscheinlich</span>
+    </div>
+    <div class="hinweis">Größte Schule in Überlingen (350+ Schüler) – institutionell, regelmäßiger Bedarf an Lehrkräften.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE4: Trösch Tanzschule -->
+  <div class="card mid" data-id="troesch" data-name="Trösch Tanzschule Konstanz" data-contact="07531 54411 · info@tanzschule-in-konstanz.de">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Trösch Tanzschule Konstanz</div>
+    <div class="location">Markgrafenstraße 26, 78467 Konstanz · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Inhaber</span><span class="info-val">Inga & Sven Trösch (Familienunternehmen)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+49753154411">07531 54411</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@tanzschule-in-konstanz.de">info@tanzschule-in-konstanz.de</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://tanzschule-in-konstanz.de" target="_blank">tanzschule-in-konstanz.de</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß · ADTV la danse · Familienbetrieb</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz ab 1,5 J.!</span>
+      <span class="tag">Paartanz</span>
+      <span class="tag">Hip Hop</span>
+      <span class="tag">Gesellschaftstanz</span>
+    </div>
+    <div class="hinweis">Kindertanz ab 1,5 Jahren – sehr frühe Förderung. Familienbetrieb, Honorarbedarf unklar.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE5: Tanzform Konstanz -->
+  <div class="card mid" data-id="tanzform" data-name="Tanzform Konstanz" data-contact="07531 21920 · mail@tanzform.de">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Tanzform Konstanz</div>
+    <div class="location">Brauneggerstraße 60, 78462 Konstanz · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Leitung</span><span class="info-val">Elke Scheller (Studio für Tanz, Bewegung & Choreografie)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+497531219200">07531 21920</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:mail@tanzform.de">mail@tanzform.de</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.tanzform.de" target="_blank">www.tanzform.de</a></span></div>
+    <div class="tags">
+      <span class="tag kinder">Kreativer Kindertanz</span>
+      <span class="tag">Contemporary</span>
+      <span class="tag">Choreografie</span>
+    </div>
+    <div class="hinweis">Eher künstlerisch/zeitgenössisch ausgerichtet. Mehrere Lehrkräfte im Team.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE6: Tanzschule No.10 -->
+  <div class="card mid" data-id="no10" data-name="Tanzschule No.10 (Überlingen/Friedrichshafen)" data-contact="07541 24342 · info@No10.de">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Tanzschule No.10</div>
+    <div class="location">Oberriedweg 2, 88662 Überlingen + Sportpark 5, Friedrichshafen · ~25–35 Min.</div>
+    <div class="info-row"><span class="info-label">Inhaber</span><span class="info-val">Thomas Schütze</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+4975412434">07541 24342</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@No10.de">info@No10.de</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.tanzschule-no10.de" target="_blank">www.tanzschule-no10.de</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Mittelgroß · 2 Standorte (Überlingen + Friedrichshafen)</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz</span>
+      <span class="tag kinder">Ballett</span>
+      <span class="tag">Break Dance</span>
+      <span class="tag">Paartanz</span>
+      <span class="tag honorar">Honorarlehrkräfte möglich</span>
+    </div>
+    <div class="hinweis">2 Standorte = mehr Bedarf. Überlingen ist gut erreichbar, Friedrichshafen schon etwas weit.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE7: Körperarbeit und Tanz -->
+  <div class="card mid" data-id="koerperarbeit" data-name="Körperarbeit und Tanz Überlingen" data-contact="07551 936045 · info@koerperarbeit-und-tanz.de">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge mid">Prüfenswert</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Körperarbeit und Tanz</div>
+    <div class="location">Zum Degenhardt 11a, 88662 Überlingen · ~25 Min.</div>
+    <div class="info-row"><span class="info-label">Leiterin</span><span class="info-val">Bianca Kummer (seit 1995)</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+4975519360450">07551 936045</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@koerperarbeit-und-tanz.de">info@koerperarbeit-und-tanz.de</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.koerperarbeit-und-tanz.de" target="_blank">www.koerperarbeit-und-tanz.de</a></span></div>
+    <div class="info-row"><span class="info-label">Größe</span><span class="info-val">Klein–mittelgroß · Einzelperson, seit 1995</span></div>
+    <div class="tags">
+      <span class="tag kinder">Kindertanz "Wirbelnde Füße"</span>
+      <span class="tag">Ausdruckstanz</span>
+      <span class="tag">Modern Dance</span>
+      <span class="tag">Hip Hop</span>
+    </div>
+    <div class="hinweis">Langjährige Inhaberin unterrichtet selbst – Honorarbedarf eher gering.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="z.B. bereits kontaktiert, Termin am ..."></textarea></div>
+  </div>
+
+  <!-- DE8: Flamemotions -->
+  <div class="card low" data-id="flamemotions" data-name="Flamemotions Konstanz" data-contact="www.flamemotions.com">
+    <div class="card-header">
+      <div class="card-header-left"><span class="badge low">Weniger geeignet</span></div>
+      <button class="interest-btn" onclick="toggleInterest(this)">Interessiert</button>
+    </div>
+    <div class="school-name">Flamemotions</div>
+    <div class="location">Hieronymusgasse 1, 78462 Konstanz · ~15 Min.</div>
+    <div class="info-row"><span class="info-label">Inhaber</span><span class="info-val">Michael Bluemm</span></div>
+    <div class="info-row"><span class="info-label">Telefon</span><span class="info-val"><a href="tel:+491707745633">+49 170 7745633</a></span></div>
+    <div class="info-row"><span class="info-label">E-Mail</span><span class="info-val"><a href="mailto:info@flamemotions.com">info@flamemotions.com</a></span></div>
+    <div class="info-row"><span class="info-label">Website</span><span class="info-val"><a href="https://www.flamemotions.com" target="_blank">www.flamemotions.com</a></span></div>
+    <div class="tags">
+      <span class="tag">Salsa / Bachata</span>
+      <span class="tag">Discofox</span>
+      <span class="tag">West Coast Swing</span>
+      <span class="tag">Tango Argentino</span>
+    </div>
+    <div class="hinweis">Spezialisierung auf lateinamerikanische Paartänze – kein Kindertanz-Angebot.</div>
+    <div class="notes-area"><div class="notes-label">Notizen:</div><textarea placeholder="Notizen ..."></textarea></div>
+  </div>
+
+</div>
+
+<p style="margin-top:24px; font-size:12px; color:#999;">Recherche: April 2026 · Quellen: Schulwebsites, IG Tanz Thurgau, WebSearch</p>
+
+<script>
+  // Teilen-Funktionen
+  function getFilePath() {
+    return decodeURIComponent(window.location.href.replace('file:///', '').replace(/\//g, '\\'));
+  }
+
+  const SHARE_URL = 'https://1drv.ms/u/c/ca61d0fa76387191/IQAouxXhSWnTRoofEGhfca-WAfkR72NJUtm4261zdP6iw4w?e=cx788h';
+
+  function openShareModal() {
+    document.getElementById('file-path-box').textContent = SHARE_URL;
+    document.getElementById('share-modal').classList.add('open');
+    document.getElementById('copy-confirm').textContent = '';
+  }
+
+  function closeShareModal(e) {
+    if (e.target === document.getElementById('share-modal'))
+      document.getElementById('share-modal').classList.remove('open');
+  }
+
+  function copyPath() {
+    const ta = document.createElement('textarea');
+    ta.value = SHARE_URL;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('copy-confirm').textContent = '✓ Link kopiert!';
+  }
+
+  function openMail() {
+    const subject = encodeURIComponent('Tanzschulen Übersicht – bitte prüfen');
+    const body = encodeURIComponent(
+      'Hallo,\n\nhier ist die Übersicht der Tanzschulen im Raum Kreuzlingen/Thurgau:\n\n'
+      + SHARE_URL + '\n\n'
+      + 'Bitte öffne den Link und klicke bei den Schulen auf "Interessiert", '
+      + 'die für dich in Frage kommen. Du kannst auch Notizen hinzufügen.\n\n'
+      + 'Deine Auswahl wird automatisch gespeichert.\n\nViele Grüsse'
+    );
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+  }
+
+  function shareNative() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Tanzschulen Übersicht',
+        text: 'Übersicht der Tanzschulen im Raum Kreuzlingen/Thurgau – bitte prüfen',
+        url: SHARE_URL
+      });
+    }
+  }
+
+  const STORAGE_KEY = 'taty_tanzschulen_v1';
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch(e) { return {}; }
+  }
+
+  function saveState() {
+    const state = {};
+    document.querySelectorAll('.card[data-id]').forEach(card => {
+      const id = card.dataset.id;
+      const selected = card.classList.contains('selected');
+      const notes = card.querySelector('textarea') ? card.querySelector('textarea').value : '';
+      state[id] = { selected, notes };
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    showSaveHint();
+  }
+
+  function showSaveHint() {
+    const hint = document.getElementById('save-hint');
+    hint.textContent = 'Auswahl gespeichert ✓';
+    setTimeout(() => hint.textContent = '', 2000);
+  }
+
+  function toggleInterest(btn) {
+    const card = btn.closest('.card');
+    const isActive = btn.classList.contains('active');
+    btn.classList.toggle('active', !isActive);
+    btn.textContent = isActive ? 'Interessiert' : '✓ Ausgewählt';
+    card.classList.toggle('selected', !isActive);
+    saveState();
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const box = document.getElementById('summary-box');
+    const list = document.getElementById('summary-list');
+    const selected = document.querySelectorAll('.card.selected');
+    list.innerHTML = '';
+    if (selected.length === 0) {
+      box.style.display = 'none';
+      return;
+    }
+    box.style.display = 'block';
+    selected.forEach(card => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="summary-name">' + card.dataset.name + '</span>'
+                   + '<span class="summary-contact">' + card.dataset.contact + '</span>';
+      list.appendChild(li);
+    });
+  }
+
+  // Zustand beim Laden wiederherstellen
+  window.addEventListener('DOMContentLoaded', () => {
+    const state = loadState();
+    document.querySelectorAll('.card[data-id]').forEach(card => {
+      const id = card.dataset.id;
+      const s = state[id];
+      if (!s) return;
+      if (s.selected) {
+        card.classList.add('selected');
+        const btn = card.querySelector('.interest-btn');
+        btn.classList.add('active');
+        btn.textContent = '✓ Ausgewählt';
+      }
+      if (s.notes && card.querySelector('textarea')) {
+        card.querySelector('textarea').value = s.notes;
+      }
+    });
+    updateSummary();
+
+    // Nativer Share-Button auf Mobile anzeigen
+    if (navigator.share) {
+      document.getElementById('native-share-btn').style.display = 'block';
+    }
+
+    // Notizen autosave beim Tippen
+    document.querySelectorAll('.notes-area textarea').forEach(ta => {
+      ta.addEventListener('input', saveState);
+    });
+  });
+</script>
+
+</body>
+</html>
